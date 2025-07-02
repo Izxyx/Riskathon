@@ -760,13 +760,13 @@ def main():
             st.rerun()
     
     st.markdown("---")
-    st.subheader("Borrar Base de Datos")
+    st.subheader("Descargar Resultados en CSV")
     col_descargar, _ = st.columns([1, 3])
     with col_descargar:
         nombre_de_mi_tabla = "test_table"
         df_to_dowload = obtener_todos_los_datos_en_dataframe(nombre_de_mi_tabla)
         st.download_button(
-        label="Descargar Resultados en CSV",
+        label="Descargar",
         data=df_to_dowload.to_csv(index=False).encode('utf-8'),
         file_name='respuestas_dados.csv',
         mime='text/csv',
