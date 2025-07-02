@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime
 import time
 import re
-import mysql.connector
+import pymysql
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -22,12 +22,11 @@ DB_CONFIG = {
 def conectar_bd():
     """Establece y retorna una conexión a la base de datos MySQL."""
     try:
-        conn = mysql.connector.connect(**DB_CONFIG)
-        # Si usas PyMySQL:
-        # conn = pymysql.connect(**DB_CONFIG)
+        #conn = mysql.connector.connect(**DB_CONFIG)
+        conn = pymysql.connect(**DB_CONFIG)
         print("Conexión a la base de datos MySQL exitosa.")
         return conn
-    except mysql.connector.Error as err:
+    except pymysql.connect.Error as err:
         print(f"Error al conectar a la base de datos: {err}")
         return None
     
@@ -48,7 +47,7 @@ def prueba_conexion():
             cursor.execute("SELECT DATABASE();")
             db_name = cursor.fetchone()
             print(f"Conectado a la base de datos: {db_name[0]}")
-        except mysql.connector.Error as err:
+        except pymysql.connect.Error as err:
             print(f"Error al ejecutar la consulta: {err}")
         finally:
             cursor.close()
@@ -78,7 +77,7 @@ def crear_tabla(nombre_tabla):
         cursor.execute(create_table_query)
         conn.commit()
         print(f"Tabla '{nombre_tabla}' creada o ya existente.")
-    except mysql.connector.Error as err:
+    except pymysql.connect.Error as err:
         print(f"Error al crear la tabla: {err}")
         conn.rollback() # Revierte si hubo un error en la creación
     finally:
@@ -109,7 +108,7 @@ def insertar_dataframe(df, nombre_tabla, if_exists='append'):
         conn.commit() # Confirma los cambios en la base de datos
         print(f"Datos del DataFrame insertados exitosamente en la tabla '{nombre_tabla}'.")
 
-    except mysql.connector.Error as err:
+    except pymysql.connect.Error as err:
         print(f"Error al insertar datos en la base de datos: {err}")
         conn.rollback() # Revierte los cambios si hay un error
     finally:
@@ -150,7 +149,7 @@ def eliminar_informacion(nombre_tabla):
         conn.commit() # Confirma los cambios en la base de datos
         print(f"Datos de la tabla '{nombre_tabla}' borrados exitosamente.")
 
-    except mysql.connector.Error as err:
+    except pymysql.connect.Error as err:
         print(f"Error al borrar datos de la tabla: {err}")
         conn.rollback() # Revierte los cambios si hay un error
     finally:
