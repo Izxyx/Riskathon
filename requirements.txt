@@ -1,5 +1,5 @@
 streamlit==1.40.1
 pandas==2.1.4
 numpy==1.26.3
-mysqlclient==2.1.1
+mysqlclient==2.2.7
 SQLAlchemy==1.4.54

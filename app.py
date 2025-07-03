@@ -5,18 +5,128 @@ import pandas as pd
 from datetime import datetime
 import time
 import re
-import pymysql
+import sqlalchemy
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
 # --- Manejo de la base de datos ---
+def conectar_bd():
+    """Establece y retorna una conexión a la base de datos MySQL usando st.connection"""
+    try:
+        conn = st.connection('mysql', type='sql')
+        print("Conexión a la base de datos MySQL exitosa a través de Streamlit.")
+        return conn
+    except Exception as err:
+        print(f"Error al conectar a la base de datos a través de Streamlit: {err}")
+        st.error(f"Error al conectar a la base de datos: {err}")
+        return None
 
-# Initialize connection.
-conn = st.connection('mysql', type='sql')
+def cerrar_conexion(conn):
+    """Cierra la conexión a la base de datos si es una conexión PyMySQL directa"""
+    if conn and hasattr(conn, 'close'):
+        try:
+            conn.close()
+            print("Conexión a la base de datos cerrada.")
+        except Exception as e:
+            print(f"Error al intentar cerrar la conexión: {e}")
+    else:
+        print("No hay conexión directa para cerrar o Streamlit la gestiona.")
 
-# Perform query.
-df = conn.query('SELECT * from test_table;', ttl=600)
+def prueba_conexion(conn):
+    """Prueba la conexión a la base de datos y realiza una consulta simple"""
+    if conn:
+        try:
+            result = conn.query("SELECT DATABASE();", ttl=0)
+            db_name = result.iloc[0,0]
+            print(f"Conectado a la base de datos: {db_name}")
+            st.success(f"Conectado a la base de datos: **{db_name}**")
+            return True
+        except Exception as err:
+            print(f"Error al ejecutar la consulta de prueba: {err}")
+            st.error(f"Error al ejecutar la consulta de prueba: {err}")
+            return False
+    else:
+        print("No hay conexión activa para probar.")
+        return False
 
+def crear_tabla(nombre_tabla):
+    """Crea tabla base"""
+    conn = conectar_bd()
+    if conn is None:
+        st.error("No hay conexión a la base de datos para crear la tabla.")
+        return
+
+    create_table_query = f"""
+    CREATE TABLE IF NOT EXISTS {nombre_tabla} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nombre_staff VARCHAR(255) NOT NULL,
+        hora_registro DATETIME NOT NULL,
+        numero_usuario INT NOT NULL,
+        nombre_usuario VARCHAR(100) NOT NULL,
+        puntos_acumulados INT DEFAULT 0
+    );
+    """
+    
+    try:
+        conn.query(create_table_query, ttl=0)
+        print(f"Tabla '{nombre_tabla}' creada o ya existente.")
+        st.success(f"Tabla '{nombre_tabla}' creada o ya existente.")
+    except Exception as err:
+        print(f"Error al crear la tabla: {err}")
+        st.error(f"Error al crear la tabla: {err}")
+
+def insertar_dataframe(df, nombre_tabla):
+    conn = conectar_bd()
+    if conn is None or df.empty:
+        return
+
+    try:
+        # Obtener el engine SQLAlchemy de la conexión de Streamlit
+        engine = conn.engine if hasattr(conn, "engine") else conn._engine
+
+        # Insertar el DataFrame usando to_sql de pandas
+        df.to_sql(nombre_tabla, con=engine, if_exists='append', index=False, method='multi')
+        print(f"Datos del DataFrame insertados exitosamente en la tabla '{nombre_tabla}'.")
+
+    except Exception as err:
+        print(f"Error al insertar datos en la base de datos: {err}")
+    finally:
+        cerrar_conexion(conn)
+
+def obtener_todos_los_datos_en_dataframe(nombre_tabla):
+    """Obtiene todos los datos de una tabla y los retorna como un DataFrame"""
+    conn = conectar_bd()
+    if conn is None:
+        st.error("No hay conexión a la base de datos para obtener datos.")
+        return pd.DataFrame()
+
+    try:
+        df = conn.query(f"SELECT * FROM {nombre_tabla};", ttl="1h") # Cache por 1 hora
+        print(f"Datos obtenidos de la tabla '{nombre_tabla}' en un DataFrame.")
+        return df
+    except Exception as err:
+        print(f"Error al obtener datos de la tabla '{nombre_tabla}': {err}")
+        st.error(f"Error al obtener datos de la tabla '{nombre_tabla}': {err}")
+        return pd.DataFrame()
+
+def eliminar_informacion(nombre_tabla):
+    """Elimina toda la información de una tabla en la base de datos usando SQLAlchemy"""
+    conn = conectar_bd()
+    if conn is None:
+        st.error("No hay conexión a la base de datos para eliminar datos.")
+        return
+
+    try:
+        # Obtener el engine SQLAlchemy de la conexión de Streamlit
+        engine = conn.engine if hasattr(conn, "engine") else conn._engine
+        with engine.connect() as connection:
+            connection.execute(sqlalchemy.text(f"DELETE FROM {nombre_tabla};"))
+            st.success(f"Datos de la tabla '{nombre_tabla}' borrados exitosamente.")
+    except Exception as err:
+        print(f"Error al borrar datos de la tabla: {err}")
+        st.error(f"Error al borrar datos: {err}")
+    finally:
+        cerrar_conexion(conn)
 
 # --- Inicialización de st.session_state ---
 if 'respuestas_guardadas' not in st.session_state:
@@ -55,7 +165,6 @@ if 'pregunta_extra_dado_1' not in st.session_state:
     st.session_state.pregunta_extra_dado_1 = None
 if 'pregunta_extra_dado_2' not in st.session_state:
     st.session_state.pregunta_extra_dado_2 = None
-
 
 # --- Datos de Preguntas y Opciones ---
 preguntas_base = {
@@ -387,7 +496,7 @@ def main():
             st.error(f"Respuesta INCORRECTA para la pregunta {p_num}. No has ganado puntos.")
             st.snow()
 
-        time.sleep(1.5)
+        time.sleep(3)
 
         numero_registro_actual = st.session_state['numero_registro']
         nombre_usuario_actual = st.session_state['nombre_usuario']
@@ -601,7 +710,6 @@ def main():
             st.session_state['nombre_usuario'] = ''
             st.session_state.credenciales_validas = False
             st.session_state.preguntas_iniciales_completadas = False
-            # Resetear estados de tiros extra
             st.session_state.tiro_extra_1_tomado = False
             st.session_state.tiro_extra_2_tomado = False
             st.session_state.pregunta_extra_dado_1 = None
@@ -617,7 +725,7 @@ def main():
             # --- Funciones de Base de Datos ---
             nombre_de_mi_tabla = "test_table"
             crear_tabla(nombre_de_mi_tabla)
-            insertar_dataframe(df_respuestas, nombre_de_mi_tabla, if_exists='append') 
+            insertar_dataframe(df_respuestas, nombre_de_mi_tabla) 
             st.rerun()
     
     st.markdown("---")
@@ -643,7 +751,6 @@ def main():
         if st.button("Borrar", key="clear_base_btn"):
             nombre_de_mi_tabla = "test_table"
             eliminar_informacion(nombre_de_mi_tabla)
-            st.success("¡Base de datos borrada exitosamente!")
 
 # --- Bloque de Ejecución Principal ---
 if __name__ == "__main__":

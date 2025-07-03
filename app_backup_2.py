@@ -589,22 +589,27 @@ def main():
             st.success("¡Has respondido las 3 preguntas iniciales!")
             st.markdown("---")
 
-            # Opción para lanzar el primer dado extra
-            st.subheader("¡Oportunidad de Puntos Extra (1 de 2)!")
-            st.write(f"¿Quieres lanzar un dado más para obtener una pregunta adicional? **Costo: {st.session_state.costo_tiro_extra_1} puntos**")
-            if st.button(f"Lanzar 1 Dado Extra (Costo: {st.session_state.costo_tiro_extra_1} puntos)", use_container_width=True, key="lanzar_dado_extra_1", disabled=st.session_state.tiro_extra_1_tomado):
-                if st.session_state.puntos_totales >= st.session_state.costo_tiro_extra_1:
-                    preguntas_obtenidas = lanzar_dados(num_dados=1)
-                    if preguntas_obtenidas:
-                        st.session_state.puntos_totales -= st.session_state.costo_tiro_extra_1
-                        st.session_state.pregunta_extra_dado_1 = preguntas_obtenidas[0]
-                        st.session_state.tiro_extra_1_tomado = True
-                        st.success(f"¡Dado extra lanzado! Se restaron {st.session_state.costo_tiro_extra_1} puntos. Pregunta adicional: {st.session_state.pregunta_extra_dado_1}")
+            # Opción para lanzar el primer dado extra, solo si hay puntos > 0
+            if st.session_state.puntos_totales > 0: # <-- Nueva condición
+                st.subheader("¡Oportunidad de Puntos Extra (1 de 2)!")
+                st.write(f"¿Quieres lanzar un dado más para obtener una pregunta adicional? **Costo: {st.session_state.costo_tiro_extra_1} puntos**")
+                if st.button(f"Lanzar 1 Dado Extra (Costo: {st.session_state.costo_tiro_extra_1} puntos)", use_container_width=True, key="lanzar_dado_extra_1", 
+                             disabled=st.session_state.tiro_extra_1_tomado or st.session_state.puntos_totales <= 0):
+                    if st.session_state.puntos_totales >= st.session_state.costo_tiro_extra_1:
+                        preguntas_obtenidas = lanzar_dados(num_dados=1)
+                        if preguntas_obtenidas:
+                            st.session_state.puntos_totales -= st.session_state.costo_tiro_extra_1
+                            st.session_state.pregunta_extra_dado_1 = preguntas_obtenidas[0]
+                            st.session_state.tiro_extra_1_tomado = True
+                            st.success(f"¡Dado extra lanzado! Se restaron {st.session_state.costo_tiro_extra_1} puntos. Pregunta adicional: {st.session_state.pregunta_extra_dado_1}")
+                        else:
+                            st.warning("No se pudo lanzar el dado extra. No hay más preguntas disponibles o ya las respondiste todas.")
                     else:
-                        st.warning("No se pudo lanzar el dado extra. No hay más preguntas disponibles o ya las respondiste todas.")
-                else:
-                    st.error(f"¡No tienes suficientes puntos para este tiro extra! Necesitas {st.session_state.costo_tiro_extra_1} puntos y tienes {st.session_state.puntos_totales}.")
-                st.rerun()
+                        st.error(f"¡No tienes suficientes puntos para este tiro extra! Necesitas {st.session_state.costo_tiro_extra_1} puntos y tienes {st.session_state.puntos_totales}.")
+                    st.rerun()
+            else:
+                st.info("No tienes puntos acumulados para optar por tiros extra en este momento.")
+
 
     # Mostrar la pregunta extra 1 si se lanzó el dado extra y aún no ha sido respondida
     if st.session_state.pregunta_extra_dado_1 is not None and st.session_state.pregunta_extra_dado_1 not in st.session_state.preguntas_respondidas_sesion:
@@ -642,22 +647,26 @@ def main():
     elif st.session_state.tiro_extra_1_tomado and st.session_state.pregunta_extra_dado_1 is None and not st.session_state.tiro_extra_2_tomado:
         st.success("¡Has respondido la primera pregunta extra!")
         st.markdown("---")
-        # Mostrar opción para el segundo tiro extra si el primero ya fue respondido y el segundo no ha sido tomado
-        st.subheader("¡Oportunidad de Puntos Extra (2 de 2)!")
-        st.write(f"¿Quieres lanzar un dado más para obtener otra pregunta adicional? **Costo: {st.session_state.costo_tiro_extra_2} puntos**")
-        if st.button(f"Lanzar 1 Dado Extra (Costo: {st.session_state.costo_tiro_extra_2} puntos)", use_container_width=True, key="lanzar_dado_extra_2", disabled=st.session_state.tiro_extra_2_tomado):
-            if st.session_state.puntos_totales >= st.session_state.costo_tiro_extra_2:
-                preguntas_obtenidas = lanzar_dados(num_dados=1)
-                if preguntas_obtenidas:
-                    st.session_state.puntos_totales -= st.session_state.costo_tiro_extra_2
-                    st.session_state.pregunta_extra_dado_2 = preguntas_obtenidas[0]
-                    st.session_state.tiro_extra_2_tomado = True
-                    st.success(f"¡Dado extra lanzado! Se restaron {st.session_state.costo_tiro_extra_2} puntos. Pregunta adicional: {st.session_state.pregunta_extra_dado_2}")
+        # Mostrar opción para el segundo tiro extra si el primero ya fue respondido y el segundo no ha sido tomado, solo si hay puntos > 0
+        if st.session_state.puntos_totales > 0: # <-- Nueva condición
+            st.subheader("¡Oportunidad de Puntos Extra (2 de 2)!")
+            st.write(f"¿Quieres lanzar un dado más para obtener otra pregunta adicional? **Costo: {st.session_state.costo_tiro_extra_2} puntos**")
+            if st.button(f"Lanzar 1 Dado Extra (Costo: {st.session_state.costo_tiro_extra_2} puntos)", use_container_width=True, key="lanzar_dado_extra_2", 
+                         disabled=st.session_state.tiro_extra_2_tomado or st.session_state.puntos_totales <= 0):
+                if st.session_state.puntos_totales >= st.session_state.costo_tiro_extra_2:
+                    preguntas_obtenidas = lanzar_dados(num_dados=1)
+                    if preguntas_obtenidas:
+                        st.session_state.puntos_totales -= st.session_state.costo_tiro_extra_2
+                        st.session_state.pregunta_extra_dado_2 = preguntas_obtenidas[0]
+                        st.session_state.tiro_extra_2_tomado = True
+                        st.success(f"¡Dado extra lanzado! Se restaron {st.session_state.costo_tiro_extra_2} puntos. Pregunta adicional: {st.session_state.pregunta_extra_dado_2}")
+                    else:
+                        st.warning("No se pudo lanzar el dado extra. No hay más preguntas disponibles o ya las respondiste todas.")
                 else:
-                    st.warning("No se pudo lanzar el dado extra. No hay más preguntas disponibles o ya las respondiste todas.")
-            else:
-                st.error(f"¡No tienes suficientes puntos para este tiro extra! Necesitas {st.session_state.costo_tiro_extra_2} puntos y tienes {st.session_state.puntos_totales}.")
-            st.rerun()
+                    st.error(f"¡No tienes suficientes puntos para este tiro extra! Necesitas {st.session_state.costo_tiro_extra_2} puntos y tienes {st.session_state.puntos_totales}.")
+                st.rerun()
+        else:
+            st.info("No tienes puntos acumulados para optar por más tiros extra en este momento.")
 
     # Mostrar la pregunta extra 2 si se lanzó el dado extra 2 y aún no ha sido respondida
     if st.session_state.pregunta_extra_dado_2 is not None and st.session_state.pregunta_extra_dado_2 not in st.session_state.preguntas_respondidas_sesion:
@@ -667,7 +676,7 @@ def main():
             pregunta_num_extra,
             {
                 "pregunta": f"Pregunta Extra {pregunta_num_extra} (no definida):",
-                "opciones": [f"A) Opción {pregunta_num_extra}-1", f"B) Opción {pregunta_num_extra}-2", f"C) Opción {pregunta_num_extra}-3"],
+                "opciones": [f"A) Opción {pregunta_num_extra}-1", f"B) Opción {pregunta_num_extra}-2", "C) Opción {pregunta_num_extra}-3"],
                 "opciones_correctas": "",
                 "puntos": 0
             }
@@ -696,7 +705,6 @@ def main():
         st.success("¡Has respondido la segunda pregunta extra!")
         st.info("¡No hay más tiros extra disponibles en esta sesión!")
 
-
     # --- Sección para mostrar y descargar las respuestas ---
     st.subheader("Respuestas Guardadas:")
 
@@ -715,16 +723,16 @@ def main():
         st.dataframe(df_respuestas, use_container_width=True)
 
         # Guardar las respuestas en un archivo CSV en local
-        #try:
-            #df_combinado = pd.concat([df_respuestas_historico, df_respuestas], ignore_index=True)
-            #df_combinado.drop_duplicates(subset=['numero_usuario', 'pregunta_num', 'hora_registro'], keep='last', inplace=True)
-            #df_combinado.to_csv("respuestas_dados.csv", index=False)
-        #except Exception as e:
-            #st.error(f"Error al guardar o combinar el archivo CSV: {e}")
+        try:
+            df_combinado = pd.concat([df_respuestas_historico, df_respuestas], ignore_index=True)
+            df_combinado.drop_duplicates(subset=['numero_usuario', 'pregunta_num', 'hora_registro'], keep='last', inplace=True)
+            df_combinado.to_csv("respuestas_dados.csv", index=False)
+        except Exception as e:
+            st.error(f"Error al guardar o combinar el archivo CSV: {e}")
 
     col_limpiar, _ = st.columns([1,3])
     with col_limpiar:
-        if st.button("Volver a jugar", key="clear_responses_btn"):
+        if st.button("Siguiente Jugador", key="clear_responses_btn"):
             st.session_state.respuestas_guardadas = []
             st.session_state.ultimos_dados = None
             st.session_state.puntos_totales = 0
@@ -769,13 +777,13 @@ def main():
     st.markdown("---")
 
     # --- Sección para borrar la base de datos ---
-    #st.subheader("Borrar Base de Datos")
-    #col_borrar_base, _ = st.columns([1, 3])
-    #with col_borrar_base:
-        #if st.button("Borrar", key="clear_base_btn"):
-            #nombre_de_mi_tabla = "test_table"
-            #eliminar_informacion(nombre_de_mi_tabla)
-            #st.success("¡Base de datos borrada exitosamente!")
+    st.subheader("Borrar Base de Datos")
+    col_borrar_base, _ = st.columns([1, 3])
+    with col_borrar_base:
+        if st.button("Borrar", key="clear_base_btn"):
+            nombre_de_mi_tabla = "test_table"
+            eliminar_informacion(nombre_de_mi_tabla)
+            st.success("¡Base de datos borrada exitosamente!")
 
 # --- Bloque de Ejecución Principal ---
 if __name__ == "__main__":

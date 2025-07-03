@@ -5,156 +5,70 @@ import pandas as pd
 from datetime import datetime
 import time
 import re
-import pymysql
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
-# --- Configuración de la base de datos ---
-DB_CONFIG = {
-    'host': 'bve8j19quf3olh2kq7px-mysql.services.clever-cloud.com',
-    'user': 'uytuuxo3rv82bekd',
-    'password': 'zlUkvkuyzmVwPR4jvjpL',
-    'database': 'bve8j19quf3olh2kq7px',
-    'port': 3306 # El puerto predeterminado de MySQL
-}
+# --- Configuración de la Página de Streamlit ---
+st.set_page_config(
+    page_title="Test de Conocimiento",
+    page_icon="🎲",
+    layout="centered"
+)
 
-# --- Manejo de la base de datos ---
-def conectar_bd():
-    """Establece y retorna una conexión a la base de datos MySQL."""
-    try:
-        #conn = mysql.connector.connect(**DB_CONFIG)
-        conn = pymysql.connect(**DB_CONFIG)
-        print("Conexión a la base de datos MySQL exitosa.")
-        return conn
-    except pymysql.connect.Error as err:
-        print(f"Error al conectar a la base de datos: {err}")
-        return None
-    
-def cerrar_conexion(conn):
-    """Cierra la conexión a la base de datos."""
-    if conn:
-        conn.close()
-        print("Conexión a la base de datos cerrada.")
-    else:
-        print("No hay conexión para cerrar.")
-
-def prueba_conexion():
-    """Prueba la conexión a la base de datos y realiza una consulta simple."""
-    conn = conectar_bd()
-    if conn:
-        cursor = conn.cursor()
-        try:
-            cursor.execute("SELECT DATABASE();")
-            db_name = cursor.fetchone()
-            print(f"Conectado a la base de datos: {db_name[0]}")
-        except pymysql.connect.Error as err:
-            print(f"Error al ejecutar la consulta: {err}")
-        finally:
-            cursor.close()
-            cerrar_conexion(conn)
-
-def crear_tabla(nombre_tabla):
-    """Crea tabla base."""
-    conn = conectar_bd()
-    if conn is None:
-        return
-
-    cursor = conn.cursor()
-
-    # Definición de la sentencia SQL para crear la tabla
-    create_table_query = f"""
-    CREATE TABLE IF NOT EXISTS {nombre_tabla} (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        nombre_staff VARCHAR(255) NOT NULL,
-        hora_registro DATETIME NOT NULL,
-        numero_usuario INT NOT NULL,
-        nombre_usuario VARCHAR(100) NOT NULL,
-        puntos_acumulados INT DEFAULT 0
-    );
+# --- Gestión de Datos en Caché ---
+# La "base de datos" ahora será un DataFrame que vive en la caché de Streamlit
+@st.cache_data(ttl=7200) # Cacha los datos por 7200 segundos (2 horas)
+def obtener_df_inicial_cached():
     """
+    Inicializa un DataFrame vacío para los datos.
+    Esto solo se ejecutará la primera vez o cuando la caché expire.
+    """
+    print("Inicializando DataFrame vacío en caché.")
+    return pd.DataFrame(columns=[
+        "nombre_staff", "hora_registro", "numero_usuario", "nombre_usuario",
+        "pregunta_num", "pregunta", "opcion_seleccionada",
+        "puntos_obtenidos", "puntos_acumulados"
+    ])
+
+def insertar_fila_en_dataframe(nueva_fila_dict):
+    """
+    Inserta una nueva fila de datos en el DataFrame almacenado en st.session_state.
+    """
+    if 'data_df' not in st.session_state:
+        st.session_state.data_df = obtener_df_inicial_cached() # O simplemente un DF vacío
     
-    try:
-        cursor.execute(create_table_query)
-        conn.commit()
-        print(f"Tabla '{nombre_tabla}' creada o ya existente.")
-    except pymysql.connect.Error as err:
-        print(f"Error al crear la tabla: {err}")
-        conn.rollback() # Revierte si hubo un error en la creación
-    finally:
-        cursor.close()
-        cerrar_conexion(conn)
+    nueva_fila_df = pd.DataFrame([nueva_fila_dict])
+    st.session_state.data_df = pd.concat([st.session_state.data_df, nueva_fila_df], ignore_index=True)
 
-def insertar_dataframe(df, nombre_tabla, if_exists='append'):
-    conn = conectar_bd()
-    if conn is None:
-        return
+def eliminar_informacion_cached():
+    """
+    Elimina toda la información del DataFrame en st.session_state.
+    """
+    st.session_state.data_df = obtener_df_inicial_cached() # Reinicia el DataFrame
+    st.cache_data.clear() # Limpiar caché si es necesario
 
-    cursor = conn.cursor()
+# --- Función para reiniciar el juego ---
+def reiniciar_juego():
+    """
+    Reinicia todas las variables de session_state para comenzar un nuevo juego.
+    """
+    st.session_state.respuestas_guardadas = []
+    st.session_state.ultimos_dados = None
+    st.session_state.puntos_totales = 0
+    st.session_state['numero_registro'] = '' 
+    st.session_state['nombre_usuario'] = ''
+    st.session_state.preguntas_respondidas_sesion = []
+    st.session_state.credenciales_validas = False
+    st.session_state.preguntas_iniciales_completadas = False
+    st.session_state.tiro_extra_1_tomado = False
+    st.session_state.tiro_extra_2_tomado = False
+    st.session_state.pregunta_extra_dado_1 = None
+    st.session_state.pregunta_extra_dado_2 = None
     
-    # Construir la consulta INSERT dinámica
-    columnas = ', '.join(df.columns)
-    # Creamos placeholders para los valores (%s para mysql.connector)
-    placeholders = ', '.join(['%s'] * len(df.columns))
-    
-    query = f"INSERT INTO {nombre_tabla} ({columnas}) VALUES ({placeholders})"
-    
-    try:
-        # Iterar sobre cada fila del DataFrame e insertar
-        for index, row in df.iterrows():
-            # Convertimos la fila a una tupla de valores para el execute
-            valores = tuple(row.values)
-            cursor.execute(query, valores)
-        
-        conn.commit() # Confirma los cambios en la base de datos
-        print(f"Datos del DataFrame insertados exitosamente en la tabla '{nombre_tabla}'.")
-
-    except pymysql.connect.Error as err:
-        print(f"Error al insertar datos en la base de datos: {err}")
-        conn.rollback() # Revierte los cambios si hay un error
-    finally:
-        cursor.close()
-        cerrar_conexion(conn)
-
-def obtener_todos_los_datos_en_dataframe(nombre_tabla):
-    """Inserta un DataFrame en una tabla de la base de datos."""
-    conn = conectar_bd()
-    if conn is None:
-        return pd.DataFrame() # Retorna un DataFrame vacío si no hay conexión
-
-    try:
-        query = f"SELECT * FROM {nombre_tabla};"
-        df = pd.read_sql_query(query, conn)
-        print(f"Datos obtenidos de la tabla '{nombre_tabla}' en un DataFrame.")
-        return df
-    except pd.io.sql.DatabaseError as err:
-        print(f"Error al obtener datos de la tabla '{nombre_tabla}': {err}")
-        return pd.DataFrame() # Retorna un DataFrame vacío en caso de error
-    finally:
-        cerrar_conexion(conn)
-
-def eliminar_informacion(nombre_tabla):
-    """Obtener la información en la base de datos."""
-    conn = conectar_bd()
-    if conn is None:
-        return
-
-    cursor = conn.cursor()
-    
-    # Construir la consulta DELETE dinámica
-    query = f"DELETE FROM {nombre_tabla};"
-    
-    try:
-        cursor.execute(query)
-        
-        conn.commit() # Confirma los cambios en la base de datos
-        print(f"Datos de la tabla '{nombre_tabla}' borrados exitosamente.")
-
-    except pymysql.connect.Error as err:
-        print(f"Error al borrar datos de la tabla: {err}")
-        conn.rollback() # Revierte los cambios si hay un error
-    finally:
-        cursor.close()
-        cerrar_conexion(conn)
+    # Vaciar el DataFrame para el nuevo juego
+    st.session_state.data_df = obtener_df_inicial_cached() 
+    st.success("¡Juego reiniciado! Un nuevo jugador puede comenzar.")
+    st.rerun() # Volver a ejecutar la aplicación para reflejar los cambios
 
 # --- Inicialización de st.session_state ---
 if 'respuestas_guardadas' not in st.session_state:
@@ -188,6 +102,9 @@ if 'pregunta_extra_dado_1' not in st.session_state:
 if 'pregunta_extra_dado_2' not in st.session_state:
     st.session_state.pregunta_extra_dado_2 = None
 
+# Inicialización del DataFrame principal para almacenar datos
+if 'data_df' not in st.session_state:
+    st.session_state.data_df = obtener_df_inicial_cached()
 
 # --- Datos de Preguntas y Opciones ---
 preguntas_base = {
@@ -413,13 +330,6 @@ preguntas_base = {
 # Número de preguntas
 numero_preguntas_disponibles = len(preguntas_base)
 
-# --- Configuración de la Página de Streamlit ---
-st.set_page_config(
-    page_title="Test de Conocimiento",
-    page_icon="🎲",
-    layout="centered"
-)
-
 # --- Funciones de Lógica ---
 def lanzar_dados(num_dados=3):
     """
@@ -487,7 +397,7 @@ def main():
 
             if st.session_state.ultimos_dados:
                 st.success("¡Datos válidos! Resultados del lanzamiento inicial:")
-                st.write(f"**Dados lanzados (iniciales):** {', '.join(map(str, st.session_state.ultimos_dados))}")
+                st.write(f"### **Dados lanzados (iniciales):** {', '.join(map(str, st.session_state.ultimos_dados))}")
                 st.markdown("---")
             else:
                 st.warning("No se pudieron lanzar nuevos dados en este momento.")
@@ -519,12 +429,13 @@ def main():
             st.error(f"Respuesta INCORRECTA para la pregunta {p_num}. No has ganado puntos.")
             st.snow()
 
-        time.sleep(1.5)
+        time.sleep(2)
 
         numero_registro_actual = st.session_state['numero_registro']
         nombre_usuario_actual = st.session_state['nombre_usuario']
 
-        st.session_state.respuestas_guardadas.append({
+        # Almacenar la respuesta en el DataFrame de session_state
+        nueva_fila = {
             "nombre_staff": st.session_state['nombre_staff'],
             "hora_registro": current_time,
             "numero_usuario": numero_registro_actual,
@@ -534,7 +445,9 @@ def main():
             "opcion_seleccionada": selected_option,
             "puntos_obtenidos": points_awarded,
             "puntos_acumulados": st.session_state.puntos_totales
-        })
+        }
+        insertar_fila_en_dataframe(nueva_fila) # Usamos la función modificada
+
         st.session_state.preguntas_respondidas_sesion.append(p_num)
 
         if is_extra_question_type is None:
@@ -589,22 +502,27 @@ def main():
             st.success("¡Has respondido las 3 preguntas iniciales!")
             st.markdown("---")
 
-            # Opción para lanzar el primer dado extra
-            st.subheader("¡Oportunidad de Puntos Extra (1 de 2)!")
-            st.write(f"¿Quieres lanzar un dado más para obtener una pregunta adicional? **Costo: {st.session_state.costo_tiro_extra_1} puntos**")
-            if st.button(f"Lanzar 1 Dado Extra (Costo: {st.session_state.costo_tiro_extra_1} puntos)", use_container_width=True, key="lanzar_dado_extra_1", disabled=st.session_state.tiro_extra_1_tomado):
-                if st.session_state.puntos_totales >= st.session_state.costo_tiro_extra_1:
-                    preguntas_obtenidas = lanzar_dados(num_dados=1)
-                    if preguntas_obtenidas:
-                        st.session_state.puntos_totales -= st.session_state.costo_tiro_extra_1
-                        st.session_state.pregunta_extra_dado_1 = preguntas_obtenidas[0]
-                        st.session_state.tiro_extra_1_tomado = True
-                        st.success(f"¡Dado extra lanzado! Se restaron {st.session_state.costo_tiro_extra_1} puntos. Pregunta adicional: {st.session_state.pregunta_extra_dado_1}")
+            # Opción para lanzar el primer dado extra, solo si hay puntos > 0
+            if st.session_state.puntos_totales > 0:
+                st.subheader("¡Oportunidad de Puntos Extra (1 de 2)!")
+                st.write(f"¿Quieres lanzar un dado más para obtener una pregunta adicional? **Costo: {st.session_state.costo_tiro_extra_1} puntos**")
+                if st.button(f"Lanzar 1 Dado Extra (Costo: {st.session_state.costo_tiro_extra_1} puntos)", use_container_width=True, key="lanzar_dado_extra_1", 
+                             disabled=st.session_state.tiro_extra_1_tomado or st.session_state.puntos_totales < st.session_state.costo_tiro_extra_1):
+                    if st.session_state.puntos_totales >= st.session_state.costo_tiro_extra_1:
+                        preguntas_obtenidas = lanzar_dados(num_dados=1)
+                        if preguntas_obtenidas:
+                            st.session_state.puntos_totales -= st.session_state.costo_tiro_extra_1
+                            st.session_state.pregunta_extra_dado_1 = preguntas_obtenidas[0]
+                            st.session_state.tiro_extra_1_tomado = True
+                            st.success(f"¡Dado extra lanzado! Se restaron {st.session_state.costo_tiro_extra_1} puntos. Pregunta adicional: {st.session_state.pregunta_extra_dado_1}")
+                        else:
+                            st.warning("No se pudo lanzar el dado extra. No hay más preguntas disponibles o ya las respondiste todas.")
                     else:
-                        st.warning("No se pudo lanzar el dado extra. No hay más preguntas disponibles o ya las respondiste todas.")
-                else:
-                    st.error(f"¡No tienes suficientes puntos para este tiro extra! Necesitas {st.session_state.costo_tiro_extra_1} puntos y tienes {st.session_state.puntos_totales}.")
-                st.rerun()
+                        st.error(f"¡No tienes suficientes puntos para este tiro extra! Necesitas {st.session_state.costo_tiro_extra_1} puntos y tienes {st.session_state.puntos_totales}.")
+                    st.rerun()
+            else:
+                st.info("No tienes puntos acumulados para optar por tiros extra en este momento.")
+
 
     # Mostrar la pregunta extra 1 si se lanzó el dado extra y aún no ha sido respondida
     if st.session_state.pregunta_extra_dado_1 is not None and st.session_state.pregunta_extra_dado_1 not in st.session_state.preguntas_respondidas_sesion:
@@ -642,22 +560,26 @@ def main():
     elif st.session_state.tiro_extra_1_tomado and st.session_state.pregunta_extra_dado_1 is None and not st.session_state.tiro_extra_2_tomado:
         st.success("¡Has respondido la primera pregunta extra!")
         st.markdown("---")
-        # Mostrar opción para el segundo tiro extra si el primero ya fue respondido y el segundo no ha sido tomado
-        st.subheader("¡Oportunidad de Puntos Extra (2 de 2)!")
-        st.write(f"¿Quieres lanzar un dado más para obtener otra pregunta adicional? **Costo: {st.session_state.costo_tiro_extra_2} puntos**")
-        if st.button(f"Lanzar 1 Dado Extra (Costo: {st.session_state.costo_tiro_extra_2} puntos)", use_container_width=True, key="lanzar_dado_extra_2", disabled=st.session_state.tiro_extra_2_tomado):
-            if st.session_state.puntos_totales >= st.session_state.costo_tiro_extra_2:
-                preguntas_obtenidas = lanzar_dados(num_dados=1)
-                if preguntas_obtenidas:
-                    st.session_state.puntos_totales -= st.session_state.costo_tiro_extra_2
-                    st.session_state.pregunta_extra_dado_2 = preguntas_obtenidas[0]
-                    st.session_state.tiro_extra_2_tomado = True
-                    st.success(f"¡Dado extra lanzado! Se restaron {st.session_state.costo_tiro_extra_2} puntos. Pregunta adicional: {st.session_state.pregunta_extra_dado_2}")
+        # Mostrar opción para el segundo tiro extra si el primero ya fue respondido y el segundo no ha sido tomado, solo si hay puntos > 0
+        if st.session_state.puntos_totales > 0:
+            st.subheader("¡Oportunidad de Puntos Extra (2 de 2)!")
+            st.write(f"¿Quieres lanzar un dado más para obtener otra pregunta adicional? **Costo: {st.session_state.costo_tiro_extra_2} puntos**")
+            if st.button(f"Lanzar 1 Dado Extra (Costo: {st.session_state.costo_tiro_extra_2} puntos)", use_container_width=True, key="lanzar_dado_extra_2", 
+                         disabled=st.session_state.tiro_extra_2_tomado or st.session_state.puntos_totales < st.session_state.costo_tiro_extra_2):
+                if st.session_state.puntos_totales >= st.session_state.costo_tiro_extra_2:
+                    preguntas_obtenidas = lanzar_dados(num_dados=1)
+                    if preguntas_obtenidas:
+                        st.session_state.puntos_totales -= st.session_state.costo_tiro_extra_2
+                        st.session_state.pregunta_extra_dado_2 = preguntas_obtenidas[0]
+                        st.session_state.tiro_extra_2_tomado = True
+                        st.success(f"¡Dado extra lanzado! Se restaron {st.session_state.costo_tiro_extra_2} puntos. Pregunta adicional: {st.session_state.pregunta_extra_dado_2}")
+                    else:
+                        st.warning("No se pudo lanzar el dado extra. No hay más preguntas disponibles o ya las respondiste todas.")
                 else:
-                    st.warning("No se pudo lanzar el dado extra. No hay más preguntas disponibles o ya las respondiste todas.")
-            else:
-                st.error(f"¡No tienes suficientes puntos para este tiro extra! Necesitas {st.session_state.costo_tiro_extra_2} puntos y tienes {st.session_state.puntos_totales}.")
-            st.rerun()
+                    st.error(f"¡No tienes suficientes puntos para este tiro extra! Necesitas {st.session_state.costo_tiro_extra_2} puntos y tienes {st.session_state.puntos_totales}.")
+                st.rerun()
+        else:
+            st.info("No tienes puntos acumulados para optar por más tiros extra en este momento.")
 
     # Mostrar la pregunta extra 2 si se lanzó el dado extra 2 y aún no ha sido respondida
     if st.session_state.pregunta_extra_dado_2 is not None and st.session_state.pregunta_extra_dado_2 not in st.session_state.preguntas_respondidas_sesion:
@@ -667,7 +589,7 @@ def main():
             pregunta_num_extra,
             {
                 "pregunta": f"Pregunta Extra {pregunta_num_extra} (no definida):",
-                "opciones": [f"A) Opción {pregunta_num_extra}-1", f"B) Opción {pregunta_num_extra}-2", f"C) Opción {pregunta_num_extra}-3"],
+                "opciones": [f"A) Opción {pregunta_num_extra}-1", f"B) Opción {pregunta_num_extra}-2", "C) Opción {pregunta_num_extra}-3"],
                 "opciones_correctas": "",
                 "puntos": 0
             }
@@ -695,87 +617,36 @@ def main():
     elif st.session_state.tiro_extra_2_tomado and st.session_state.pregunta_extra_dado_2 is None:
         st.success("¡Has respondido la segunda pregunta extra!")
         st.info("¡No hay más tiros extra disponibles en esta sesión!")
-
-
-    # --- Sección para mostrar y descargar las respuestas ---
-    st.subheader("Respuestas Guardadas:")
-
-    df_respuestas_historico = pd.DataFrame()
-    try:
-        df_respuestas_historico = pd.read_csv("respuestas_dados.csv")
-    except FileNotFoundError:
-        df_respuestas_historico = pd.DataFrame(columns=[
-            "nombre_staff", "hora_registro", "numero_usuario", "nombre_usuario",
-            "pregunta_num", "pregunta", "opcion_seleccionada",
-            "puntos_obtenidos", "puntos_acumulados"
-        ])
-
-    if st.session_state.respuestas_guardadas:
-        df_respuestas = pd.DataFrame(st.session_state.respuestas_guardadas)
-        st.dataframe(df_respuestas, use_container_width=True)
-
-        # Guardar las respuestas en un archivo CSV en local
-        #try:
-            #df_combinado = pd.concat([df_respuestas_historico, df_respuestas], ignore_index=True)
-            #df_combinado.drop_duplicates(subset=['numero_usuario', 'pregunta_num', 'hora_registro'], keep='last', inplace=True)
-            #df_combinado.to_csv("respuestas_dados.csv", index=False)
-        #except Exception as e:
-            #st.error(f"Error al guardar o combinar el archivo CSV: {e}")
-
-    col_limpiar, _ = st.columns([1,3])
-    with col_limpiar:
-        if st.button("Volver a jugar", key="clear_responses_btn"):
-            st.session_state.respuestas_guardadas = []
-            st.session_state.ultimos_dados = None
-            st.session_state.puntos_totales = 0
-            st.session_state.preguntas_respondidas_sesion = []
-            st.session_state['numero_registro'] = ''
-            st.session_state['nombre_usuario'] = ''
-            st.session_state.credenciales_validas = False
-            st.session_state.preguntas_iniciales_completadas = False
-            # Resetear estados de tiros extra
-            st.session_state.tiro_extra_1_tomado = False
-            st.session_state.tiro_extra_2_tomado = False
-            st.session_state.pregunta_extra_dado_1 = None
-            st.session_state.pregunta_extra_dado_2 = None
-
-            try:
-                df_respuestas.drop_duplicates(subset=['numero_usuario','nombre_usuario'], keep='last', inplace=True)
-                df_respuestas = df_respuestas[['nombre_staff','hora_registro','numero_usuario','nombre_usuario','puntos_acumulados']]
-            except FileNotFoundError:
-                pass
-            st.success("¡Sesión reiniciada! Puedes lanzar nuevos dados.")
-
-            # --- Funciones de Base de Datos ---
-            nombre_de_mi_tabla = "test_table"
-            crear_tabla(nombre_de_mi_tabla)
-            insertar_dataframe(df_respuestas, nombre_de_mi_tabla, if_exists='append') 
-            st.rerun()
     
+    # --- Sección de Descarga de Resultados ---
     st.markdown("---")
     st.subheader("Descargar Resultados en CSV")
-    col_descargar, _ = st.columns([1, 3])
+    col_descargar, _ = st.columns([3, 3])
     with col_descargar:
-        nombre_de_mi_tabla = "test_table"
-        df_to_dowload = obtener_todos_los_datos_en_dataframe(nombre_de_mi_tabla)
-        st.download_button(
-        label="Descargar",
-        data=df_to_dowload.to_csv(index=False).encode('utf-8'),
-        file_name='respuestas_dados.csv',
-        mime='text/csv',
-        key="download_responses_btn"
-    )
-    
-    st.markdown("---")
+        # Aquí usamos st.session_state.data_df directamente, ya que es donde
+        # almacenamos los datos en memoria en esta versión.
+        df_to_download = st.session_state.data_df
+        df_to_download = df_to_download[['hora_registro','numero_usuario','nombre_usuario','puntos_acumulados']]
+        df_to_download.drop_duplicates(subset=['numero_usuario','nombre_usuario'], inplace=True, keep='last')
+        
+        # Solo permite descargar si hay datos en el DataFrame
+        if not df_to_download.empty:
+            st.download_button(
+                label="Descargar datos de la sesión actual",
+                data=df_to_download.to_csv(index=False).encode('utf-8'),
+                file_name='respuestas_sesion_actual.csv',
+                mime='text/csv',
+                key="download_responses_btn"
+            )
+        else:
+            st.info("Aún no hay datos para descargar en esta sesión.")
 
-    # --- Sección para borrar la base de datos ---
-    #st.subheader("Borrar Base de Datos")
-    #col_borrar_base, _ = st.columns([1, 3])
-    #with col_borrar_base:
-        #if st.button("Borrar", key="clear_base_btn"):
-            #nombre_de_mi_tabla = "test_table"
-            #eliminar_informacion(nombre_de_mi_tabla)
-            #st.success("¡Base de datos borrada exitosamente!")
+    # --- Botón para reiniciar el juego ---
+    st.markdown("---")
+    st.subheader("Finalizar Juego Actual")
+    st.info("Al presionar este botón, se borrarán todos los datos del juego actual para que un nuevo jugador pueda participar.")
+    if st.button("Terminar Juego y Empezar Nuevo", use_container_width=True, key="reset_game_btn"):
+        reiniciar_juego()
 
 # --- Bloque de Ejecución Principal ---
 if __name__ == "__main__":

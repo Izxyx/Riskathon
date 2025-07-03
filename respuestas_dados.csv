@@ -1,0 +1,29 @@
+nombre_staff,hora_registro,numero_usuario,nombre_usuario,pregunta_num,pregunta,opcion_seleccionada,puntos_obtenidos,puntos_acumulados
+Administrador,2025-07-03 11:27:14,45322625,Luis Jimenez,29,¿Quién pintó la Capilla Sixtina?,B) Leonardo da Vinci,0,0
+Administrador,2025-07-03 11:27:19,45322625,Luis Jimenez,24,¿Cuál es el río más largo de América del Sur?,C) Amazonas,350,350
+Administrador,2025-07-03 11:27:23,45322625,Luis Jimenez,27,¿Cuál es el planeta más grande de nuestro sistema solar?,C) Júpiter,50,400
+Administrador,2025-07-03 11:28:10,45327777,Adrian Lopez,14,¿Qué instrumento se utiliza para medir la presión atmosférica?,A) Termómetro,0,0
+Administrador,2025-07-03 11:28:16,45327777,Adrian Lopez,5,¿En qué año llegó el hombre a la Luna?,C) 1979,0,0
+Administrador,2025-07-03 11:28:20,45327777,Adrian Lopez,7,¿Qué elemento químico tiene el símbolo 'O'?,C) Osmio,0,0
+Administrador,2025-07-03 11:32:37,45566778,Ramon Velazquez,19,¿Quién fue el autor de la teoría de la relatividad?,C) Albert Einstein,300,300
+Administrador,2025-07-03 11:32:45,45566778,Ramon Velazquez,34,¿Cuántos lados tiene un heptágono?,C) 8,0,300
+Administrador,2025-07-03 11:32:47,45566778,Ramon Velazquez,15,¿En qué continente se encuentra el desierto del Sahara?,C) África,100,400
+Administrador,2025-07-03 11:33:02,45566778,Ramon Velazquez,1,¿Cuál es la capital de Francia?,C) Roma,0,300
+Administrador,2025-07-03 11:34:33,45555555,Juan Rodriguez,19,¿Quién fue el autor de la teoría de la relatividad?,C) Albert Einstein,300,300
+Administrador,2025-07-03 11:34:38,45555555,Juan Rodriguez,5,¿En qué año llegó el hombre a la Luna?,C) 1979,0,300
+Administrador,2025-07-03 11:34:42,45555555,Juan Rodriguez,6,¿Cuál es el animal terrestre más rápido?,B) Guepardo,250,550
+Administrador,2025-07-03 11:34:51,45555555,Juan Rodriguez,21,¿Qué país es el más grande del mundo por área?,C) Rusia,-500,-50
+Administrador,2025-07-03 11:37:04,12345678,Juanita Pérez,8,¿Cuál es la montaña más alta del mundo?,C) Everest,350,350
+Administrador,2025-07-03 11:37:13,12345678,Juanita Pérez,15,¿En qué continente se encuentra el desierto del Sahara?,C) África,100,450
+Administrador,2025-07-03 11:37:25,12345678,Juanita Pérez,7,¿Qué elemento químico tiene el símbolo 'O'?,B) Oxígeno,400,850
+Administrador,2025-07-03 11:37:43,12345678,Juanita Pérez,33,¿Cuál es el deporte nacional de Japón?,C) Sumo,300,1050
+Administrador,2025-07-03 11:38:07,12345678,Juanita Pérez,16,¿Cuál es el hueso más largo del cuerpo humano?,C) Fémur,250,1100
+Administrador,2025-07-03 11:50:45,45321625,Hugo Perez ,7,¿Qué elemento químico tiene el símbolo 'O'?,B) Oxígeno,400,400
+Administrador,2025-07-03 11:50:55,45321625,Hugo Perez ,14,¿Qué instrumento se utiliza para medir la presión atmosférica?,C) Barómetro,300,700
+Administrador,2025-07-03 11:51:03,45321625,Hugo Perez ,28,¿Qué lengua se habla en Brasil?,C) Portugués,700,1400
+Administrador,2025-07-03 11:52:21,43356567,Rodrigo Segura,30,¿Cuál es el país con la mayor población del mundo?,B) India,400,400
+Administrador,2025-07-03 11:52:25,43356567,Rodrigo Segura,29,¿Quién pintó la Capilla Sixtina?,B) Leonardo da Vinci,0,400
+Administrador,2025-07-03 11:52:30,43356567,Rodrigo Segura,4,¿Cuál es el océano más grande del mundo?,C) Pacífico,300,700
+Administrador,2025-07-03 11:52:21,43356567,Rodrigo Segura,30,¿Cuál es el país con la mayor población del mundo?,B) India,400,400
+Administrador,2025-07-03 11:52:25,43356567,Rodrigo Segura,29,¿Quién pintó la Capilla Sixtina?,B) Leonardo da Vinci,0,400
+Administrador,2025-07-03 11:52:30,43356567,Rodrigo Segura,4,¿Cuál es el océano más grande del mundo?,C) Pacífico,300,700
