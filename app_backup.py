@@ -9,14 +9,152 @@ import pymysql
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
+# --- Configuración de la base de datos ---
+DB_CONFIG = {
+    'host': 'bve8j19quf3olh2kq7px-mysql.services.clever-cloud.com',
+    'user': 'uytuuxo3rv82bekd',
+    'password': 'zlUkvkuyzmVwPR4jvjpL',
+    'database': 'bve8j19quf3olh2kq7px',
+    'port': 3306 # El puerto predeterminado de MySQL
+}
+
 # --- Manejo de la base de datos ---
+def conectar_bd():
+    """Establece y retorna una conexión a la base de datos MySQL."""
+    try:
+        #conn = mysql.connector.connect(**DB_CONFIG)
+        conn = pymysql.connect(**DB_CONFIG)
+        print("Conexión a la base de datos MySQL exitosa.")
+        return conn
+    except pymysql.connect.Error as err:
+        print(f"Error al conectar a la base de datos: {err}")
+        return None
+    
+def cerrar_conexion(conn):
+    """Cierra la conexión a la base de datos."""
+    if conn:
+        conn.close()
+        print("Conexión a la base de datos cerrada.")
+    else:
+        print("No hay conexión para cerrar.")
 
-# Initialize connection.
-conn = st.connection('mysql', type='sql')
+def prueba_conexion():
+    """Prueba la conexión a la base de datos y realiza una consulta simple."""
+    conn = conectar_bd()
+    if conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("SELECT DATABASE();")
+            db_name = cursor.fetchone()
+            print(f"Conectado a la base de datos: {db_name[0]}")
+        except pymysql.connect.Error as err:
+            print(f"Error al ejecutar la consulta: {err}")
+        finally:
+            cursor.close()
+            cerrar_conexion(conn)
 
-# Perform query.
-df = conn.query('SELECT * from test_table;', ttl=600)
+def crear_tabla(nombre_tabla):
+    """Crea tabla base."""
+    conn = conectar_bd()
+    if conn is None:
+        return
 
+    cursor = conn.cursor()
+
+    # Definición de la sentencia SQL para crear la tabla
+    create_table_query = f"""
+    CREATE TABLE IF NOT EXISTS {nombre_tabla} (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nombre_staff VARCHAR(255) NOT NULL,
+        hora_registro DATETIME NOT NULL,
+        numero_usuario INT NOT NULL,
+        nombre_usuario VARCHAR(100) NOT NULL,
+        puntos_acumulados INT DEFAULT 0
+    );
+    """
+    
+    try:
+        cursor.execute(create_table_query)
+        conn.commit()
+        print(f"Tabla '{nombre_tabla}' creada o ya existente.")
+    except pymysql.connect.Error as err:
+        print(f"Error al crear la tabla: {err}")
+        conn.rollback() # Revierte si hubo un error en la creación
+    finally:
+        cursor.close()
+        cerrar_conexion(conn)
+
+def insertar_dataframe(df, nombre_tabla, if_exists='append'):
+    conn = conectar_bd()
+    if conn is None:
+        return
+
+    cursor = conn.cursor()
+    
+    # Construir la consulta INSERT dinámica
+    columnas = ', '.join(df.columns)
+    # Creamos placeholders para los valores (%s para mysql.connector)
+    placeholders = ', '.join(['%s'] * len(df.columns))
+    
+    query = f"INSERT INTO {nombre_tabla} ({columnas}) VALUES ({placeholders})"
+    
+    try:
+        # Iterar sobre cada fila del DataFrame e insertar
+        for index, row in df.iterrows():
+            # Convertimos la fila a una tupla de valores para el execute
+            valores = tuple(row.values)
+            cursor.execute(query, valores)
+        
+        conn.commit() # Confirma los cambios en la base de datos
+        print(f"Datos del DataFrame insertados exitosamente en la tabla '{nombre_tabla}'.")
+
+    except pymysql.connect.Error as err:
+        print(f"Error al insertar datos en la base de datos: {err}")
+        conn.rollback() # Revierte los cambios si hay un error
+    finally:
+        cursor.close()
+        cerrar_conexion(conn)
+
+def obtener_todos_los_datos_en_dataframe(nombre_tabla):
+    """Inserta un DataFrame en una tabla de la base de datos."""
+    conn = conectar_bd()
+    if conn is None:
+        return pd.DataFrame() # Retorna un DataFrame vacío si no hay conexión
+
+    try:
+        query = f"SELECT * FROM {nombre_tabla};"
+        df = pd.read_sql_query(query, conn)
+        print(f"Datos obtenidos de la tabla '{nombre_tabla}' en un DataFrame.")
+        return df
+    except pd.io.sql.DatabaseError as err:
+        print(f"Error al obtener datos de la tabla '{nombre_tabla}': {err}")
+        return pd.DataFrame() # Retorna un DataFrame vacío en caso de error
+    finally:
+        cerrar_conexion(conn)
+
+def eliminar_informacion(nombre_tabla):
+    """Obtener la información en la base de datos."""
+    conn = conectar_bd()
+    if conn is None:
+        return
+
+    cursor = conn.cursor()
+    
+    # Construir la consulta DELETE dinámica
+    query = f"DELETE FROM {nombre_tabla};"
+    
+    try:
+        cursor.execute(query)
+        
+        conn.commit() # Confirma los cambios en la base de datos
+        print(f"Datos de la tabla '{nombre_tabla}' borrados exitosamente.")
+
+    except pymysql.connect.Error as err:
+        print(f"Error al borrar datos de la tabla: {err}")
+        conn.rollback() # Revierte los cambios si hay un error
+    finally:
+        cursor.close()
+        cerrar_conexion(conn)
 
 # --- Inicialización de st.session_state ---
 if 'respuestas_guardadas' not in st.session_state:
