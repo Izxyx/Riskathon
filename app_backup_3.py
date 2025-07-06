@@ -1316,6 +1316,226 @@ if __name__ == "__main__":
     window.show()
     sys.exit(app.exec_())
 
+    preguntas_base = {
+    1: {
+        "pregunta": "¿Cuál es la capital de Francia?",
+        "opciones": ["A) Madrid", "B) París", "C) Roma"],
+        "opciones_correctas": "B) París",
+        "puntos": 500
+    },
+    2: {
+        "pregunta": "¿Qué planeta es conocido como el Planeta Rojo?",
+        "opciones": ["A) Júpiter", "B) Marte", "C) Venus"],
+        "opciones_correctas": "B) Marte",
+        "puntos": 400
+    },
+    3: {
+        "pregunta": "¿Quién escribió 'Cien años de soledad'?",
+        "opciones": ["A) Mario Vargas Llosa", "B) Gabriel García Márquez", "C) Julio Cortázar"],
+        "opciones_correctas": "B) Gabriel García Márquez",
+        "puntos": 350
+    },
+    4: {
+        "pregunta": "¿Cuál es el océano más grande del mundo?",
+        "opciones": ["A) Atlántico", "B) Índico", "C) Pacífico"],
+        "opciones_correctas": "C) Pacífico",
+        "puntos": 300
+    },
+    5: {
+        "pregunta": "¿En qué año llegó el hombre a la Luna?",
+        "opciones": ["A) 1969", "B) 1959", "C) 1979"],
+        "opciones_correctas": "A) 1969",
+        "puntos": 30
+    },
+    6: {
+        "pregunta": "¿Cuál es el animal terrestre más rápido?",
+        "opciones": ["A) León", "B) Guepardo", "C) Halcón Peregrino"],
+        "opciones_correctas": "B) Guepardo",
+        "puntos": 250
+    },
+    7: {
+        "pregunta": "¿Qué elemento químico tiene el símbolo 'O'?",
+        "opciones": ["A) Oro", "B) Oxígeno", "C) Osmio"],
+        "opciones_correctas": "B) Oxígeno",
+        "puntos": 400
+    },
+    8: {
+        "pregunta": "¿Cuál es la montaña más alta del mundo?",
+        "opciones": ["A) K2", "B) Kangchenjunga", "C) Everest"],
+        "opciones_correctas": "C) Everest",
+        "puntos": 350
+    },
+    9: {
+        "pregunta": "¿De qué país es originario el sushi?",
+        "opciones": ["A) China", "B) Japón", "C) Corea del Sur"],
+        "opciones_correctas": "B) Japón",
+        "puntos": 300
+    },
+    10: {
+        "pregunta": "¿Cuál es el río más largo del mundo?",
+        "opciones": ["A) Amazonas", "B) Nilo", "C) Yangtsé"],
+        "opciones_correctas": "B) Nilo",
+        "puntos": 10
+    },
+    11: {
+        "pregunta": "¿Quién pintó la Mona Lisa?",
+        "opciones": ["A) Vincent van Gogh", "B) Leonardo da Vinci", "C) Pablo Picasso"],
+        "opciones_correctas": "B) Leonardo da Vinci",
+        "puntos": 250
+    },
+    12: {
+        "pregunta": "¿Quién fue el primer presidente de los Estados Unidos?",
+        "opciones": ["A) Thomas Jefferson", "B) John Adams", "C) George Washington"],
+        "opciones_correctas": "C) George Washington",
+        "puntos": 30
+    },
+    13: {
+        "pregunta": "¿Cuál es el metal más abundante en la corteza terrestre?",
+        "opciones": ["A) Hierro", "B) Oro", "C) Aluminio"],
+        "opciones_correctas": "C) Aluminio",
+        "puntos": 350
+    },
+    14: {
+        "pregunta": "¿Qué instrumento se utiliza para medir la presión atmosférica?",
+        "opciones": ["A) Termómetro", "B) Anemómetro", "C) Barómetro"],
+        "opciones_correctas": "C) Barómetro",
+        "puntos": 300
+    },
+    15: {
+        "pregunta": "¿En qué continente se encuentra el desierto del Sahara?",
+        "opciones": ["A) Asia", "B) América del Sur", "C) África"],
+        "opciones_correctas": "C) África",
+        "puntos": 100
+    },
+    16: {
+        "pregunta": "¿Cuál es el hueso más largo del cuerpo humano?",
+        "opciones": ["A) Tibia", "B) Radio", "C) Fémur"],
+        "opciones_correctas": "C) Fémur",
+        "puntos": 250
+    },
+    17: {
+        "pregunta": "¿Qué ciudad es conocida como la 'Ciudad Eterna'?",
+        "opciones": ["A) Atenas", "B) París", "C) Roma"],
+        "opciones_correctas": "C) Roma",
+        "puntos": 30
+    },
+    18: {
+        "pregunta": "¿Cuál es el proceso por el cual las plantas producen su propio alimento?",
+        "opciones": ["A) Respiración", "B) Transpiración", "C) Fotosíntesis"],
+        "opciones_correctas": "C) Fotosíntesis",
+        "puntos": 300
+    },
+    19: {
+        "pregunta": "¿Quién fue el autor de la teoría de la relatividad?",
+        "opciones": ["A) Isaac Newton", "B) Galileo Galilei", "C) Albert Einstein"],
+        "opciones_correctas": "C) Albert Einstein",
+        "puntos": 300
+    },
+    20: {
+        "pregunta": "¿Cuál es el océano más pequeño del mundo?",
+        "opciones": ["A) Atlántico", "B) Índico", "C) Ártico"],
+        "opciones_correctas": "C) Ártico",
+        "puntos": 100
+    },
+    21: {
+        "pregunta": "¿Qué país es el más grande del mundo por área?",
+        "opciones": ["A) Canadá", "B) China", "C) Rusia"],
+        "opciones_correctas": "C) Rusia",
+        "puntos": -500
+    },
+    22: {
+        "pregunta": "¿Cuál es el sistema de escritura de los antiguos egipcios?",
+        "opciones": ["A) Cuneiforme", "B) Alfabeto Fenicio", "C) Jeroglíficos"],
+        "opciones_correctas": "C) Jeroglíficos",
+        "puntos": 50
+    },
+    23: {
+        "pregunta": "¿Cuántos huesos tiene un adulto humano promedio?",
+        "opciones": ["A) 200", "B) 206", "C) 212"],
+        "opciones_correctas": "B) 206",
+        "puntos": 300
+    },
+    24: {
+        "pregunta": "¿Cuál es el río más largo de América del Sur?",
+        "opciones": ["A) Paraná", "B) Orinoco", "C) Amazonas"],
+        "opciones_correctas": "C) Amazonas",
+        "puntos": 350
+    },
+    25: {
+        "pregunta": "¿Qué famoso científico formuló la ley de la gravitación universal?",
+        "opciones": ["A) Charles Darwin", "B) Nikola Tesla", "C) Isaac Newton"],
+        "opciones_correctas": "C) Isaac Newton",
+        "puntos": 100
+    },
+    26: {
+        "pregunta": "¿Qué país es conocido como la 'Tierra del Sol Naciente'?",
+        "opciones": ["A) China", "B) Corea del Sur", "C) Japón"],
+        "opciones_correctas": "C) Japón",
+        "puntos": 250
+    },
+    27: {
+        "pregunta": "¿Cuál es el planeta más grande de nuestro sistema solar?",
+        "opciones": ["A) Tierra", "B) Saturno", "C) Júpiter"],
+        "opciones_correctas": "C) Júpiter",
+        "puntos": 50
+    },
+    28: {
+        "pregunta": "¿Qué lengua se habla en Brasil?",
+        "opciones": ["A) Español", "B) Inglés", "C) Portugués"],
+        "opciones_correctas": "C) Portugués",
+        "puntos": 0,
+        "accion_puntos": "duplicar_acumulados"
+    },
+    29: {
+        "pregunta": "¿Quién pintó la Capilla Sixtina?",
+        "opciones": ["A) Donatello", "B) Leonardo da Vinci", "C) Miguel Ángel"],
+        "opciones_correctas": "C) Miguel Ángel",
+        "puntos": 350
+    },
+    30: {
+        "pregunta": "¿Cuál es el país con la mayor población del mundo?",
+        "opciones": ["A) Estados Unidos", "B) India", "C) Indonesia"],
+        "opciones_correctas": "B) India",
+        "puntos": 400
+    },
+    31: {
+        "pregunta": "¿Qué gas es esencial para la combustión?",
+        "opciones": ["A) Nitrógeno", "B) Dióxido de Carbono", "C) Oxígeno"],
+        "opciones_correctas": "C) Oxígeno",
+        "puntos": 250
+    },
+    32: {
+        "pregunta": "¿Quién escribió 'Don Quijote de la Mancha'?",
+        "opciones": ["A) Federico García Lorca", "B) Lope de Vega", "C) Miguel de Cervantes Saavedra"],
+        "opciones_correctas": "C) Miguel de Cervantes Saavedra",
+        "puntos": 50
+    },
+    33: {
+        "pregunta": "¿Cuál es el deporte nacional de Japón?",
+        "opciones": ["A) Judo", "B) Karate", "C) Sumo"],
+        "opciones_correctas": "C) Sumo",
+        "puntos": 300
+    },
+    34: {
+        "pregunta": "¿Cuántos lados tiene un heptágono?",
+        "opciones": ["A) 6", "B) 7", "C) 8"],
+        "opciones_correctas": "B) 7",
+        "puntos": 350
+    },
+    35: {
+        "pregunta": "¿Cuántos lados tiene un pentágono?",
+        "opciones": ["A) 5", "B) 7", "C) 8"],
+        "opciones_correctas": "A) 5",
+        "puntos": 400
+    },
+    36: {
+        "pregunta": "¿Cuántos lados tiene un triangulo?",
+        "opciones": ["A) 3", "B) 7", "C) 8"],
+        "opciones_correctas": "A) 3",
+        "puntos": 500
+    },  
+}
+
 """
 
 st.code(code, language='python')
