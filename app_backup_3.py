@@ -648,8 +648,7 @@ def main():
     if st.button("Terminar Juego y Empezar Nuevo", use_container_width=True, key="reset_game_btn"):
         reiniciar_juego()
 
-st.code(
-        """
+code = """
 # Importar librerias
 import sys
 import random
@@ -715,9 +714,7 @@ class TestConocimientoApp(QWidget):
         self.update_ui_state() 
 
     def _cargar_preguntas_desde_csv(self, filename):
-        """
-        Carga las preguntas desde un archivo CSV usando pandas y las devuelve como un diccionario
-        """
+        "Carga las preguntas desde un archivo CSV usando pandas y las devuelve como un diccionario"
         preguntas_cargadas = {}
         try:
             # Leer el CSV con pandas
@@ -778,9 +775,7 @@ class TestConocimientoApp(QWidget):
             return {}
 
     def obtener_df_inicial_sesion(self):
-        """
-        Inicializa un DataFrame vacío para los datos de la sesión actual
-        """
+        "Inicializa un DataFrame vacío para los datos de la sesión actual"
         print("Inicializando DataFrame vacío para la sesión actual.")
         return pd.DataFrame(columns=[
             "nombre_staff",
@@ -795,9 +790,7 @@ class TestConocimientoApp(QWidget):
         ])
 
     def _cargar_registros_globales(self):
-        """
-        Carga el DataFrame de registros globales desde el archivo CSV
-        """
+        "Carga el DataFrame de registros globales desde el archivo CSV"
         try:
             if os.path.exists(base_datos) and os.path.getsize(base_datos) > 0:
                 df = pd.read_csv(base_datos, encoding='utf-8')
@@ -823,9 +816,7 @@ class TestConocimientoApp(QWidget):
             ])
 
     def _guardar_registros_globales(self):
-        """
-        Guarda el DataFrame de registros globales en el archivo CSV
-        """
+        "Guarda el DataFrame de registros globales en el archivo CSV"
         try:
             self.data_df_global.to_csv(base_datos, index=False, encoding='utf-8')
             print(f"Registros globales guardados en {base_datos}.")
@@ -834,17 +825,13 @@ class TestConocimientoApp(QWidget):
 
 
     def insertar_fila_en_dataframe_sesion(self, nueva_fila_dict):
-        """
-        Inserta una nueva fila de datos en el DataFrame de la sesión actual.
-        """
+        "Inserta una nueva fila de datos en el DataFrame de la sesión actual"
         nueva_fila_df = pd.DataFrame([nueva_fila_dict])
         self.data_df_sesion = pd.concat([self.data_df_sesion, nueva_fila_df], ignore_index=True)
 
 
     def init_ui(self):
-        """
-        Codigo de la App
-        """
+        "Codigo de la App"
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
 
@@ -945,9 +932,7 @@ class TestConocimientoApp(QWidget):
         self._actualizar_leaderboard() # Actualizar el leaderboard
 
     def lanzar_dados(self, num_dados=3):
-        """
-        Simula el lanzamiento de un dado
-        """
+        "Simula el lanzamiento de un dado"
         # Las preguntas disponibles para una nueva tirada son aquellas que no se han respondido en la sesión actual.
         preguntas_disponibles_para_nueva_tirada = [
             p for p in self.preguntas_base.keys()
@@ -1162,9 +1147,7 @@ class TestConocimientoApp(QWidget):
             self._game_over_message_shown = False
 
     def _actualizar_leaderboard(self):
-        """
-        Actualiza el QLabel para mostrar al jugador con la puntuación más alta
-        """
+        "Actualiza el QLabel para mostrar al jugador con la puntuación más alta"
         if self.data_df_global.empty:
             self.leaderboard_label.setText("🏆 Jugador Top: N/A - 0 puntos")
             return
@@ -1197,9 +1180,7 @@ class TestConocimientoApp(QWidget):
 
 
     def descargar_datos_csv_global(self):
-        """
-        Descarga TODOS los registros acumulados de todos los jugadores en el CSV global
-        """
+        "Descarga TODOS los registros acumulados de todos los jugadores en el CSV global"
         if self.data_df_global.empty:
             QMessageBox.information(self, "Sin Datos", "Aún no hay datos acumulados para descargar.")
             return
@@ -1217,9 +1198,7 @@ class TestConocimientoApp(QWidget):
                 QMessageBox.critical(self, "Error de Descarga", f"No se pudo guardar el archivo: {e}")
 
     def reiniciar_juego(self):
-        """
-        Reinicia todas las variables de la aplicación para comenzar un nuevo juego.
-        """
+        "Reinicia todas las variables de la aplicación para comenzar un nuevo juego."
         reply = QMessageBox.question(self, "Terminar Sesión y Empezar Nuevo Jugador",
                                      "¿Estás seguro de que quieres terminar la sesión actual y empezar un nuevo jugador?\nEsto guardará tus resultados finales en la base de datos.",
                                      QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -1290,8 +1269,9 @@ if __name__ == "__main__":
     window = TestConocimientoApp()
     window.show()
     sys.exit(app.exec_())
-        """
-    )
+"""
+
+st.code(code, language='python')
 
 # --- Bloque de Ejecución Principal ---
 if __name__ == "__main__":
